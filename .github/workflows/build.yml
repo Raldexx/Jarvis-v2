@@ -1,0 +1,51 @@
+name: Build JARVIS
+
+on:
+  push:
+    branches: [ main ]
+  # Manuel tetikleme — Actions sekmesinden "Run workflow" butonuyla da başlatabilirsin
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      # 1. Kodu çek
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Node.js kur
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # 3. Rust kur (GitHub'ın makinesine, senin bilgisayarına değil!)
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      # 4. Rust build cache — tekrar build'leri hızlandırır
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # 5. npm bağımlılıkları
+      - name: Install dependencies
+        run: npm install
+
+      # 6. Tauri build — .exe + .msi üretir
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: "JARVIS v__VERSION__"
+          releaseBody: "JARVIS System Monitor — Tauri Edition"
+          releaseDraft: false
+          prerelease: false
