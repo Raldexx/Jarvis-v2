@@ -1,5 +1,5 @@
 <script>
-  import { onMount }          from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { getCurrentWindow } from '@tauri-apps/api/window';
 
   import CircleGauge       from '$lib/components/CircleGauge.svelte';
@@ -13,7 +13,7 @@
     systemStats, networkStats, dailyStats,
     cpuHistory, ramHistory, netHistory,
     weather, spotify, processes,
-    alerts, uptime, config, THEMES, ttsSpeak, lastError,
+    alerts, uptime, config, THEMES, ttsSpeak, lastError, startPolling, stopPolling,
   } from '$lib/stores/system.js';
 
   let modal = null;
@@ -39,7 +39,9 @@
     return p > 85 ? 'var(--danger)' : p > 65 ? 'var(--warning)' : 'var(--primary)';
   }
 
+  onDestroy(() => stopPolling());
   onMount(() => {
+    startPolling($config.updateIntervalMs);
     if ($config.soundEnabled) setTimeout(() => ttsSpeak('Systems online'), 800);
   });
 </script>
